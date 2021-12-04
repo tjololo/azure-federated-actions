@@ -6,14 +6,11 @@ on:
 
 permissions:
   id-token: write
-  contents: read
+  contents: write
   packages: write
 
 jobs:
   build-and-deploy:
-    permissions:
-      contents: read
-      packages: write
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go 1.17
