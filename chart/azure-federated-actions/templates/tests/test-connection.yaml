@@ -11,5 +11,7 @@ spec:
     - name: wget
       image: busybox
       command: ['wget']
-      args: ['{{ include "azure-federated-actions.fullname" . }}:{{ .Values.service.port }}/hello']
+      args: 
+        - '-qO-'
+        - '{{ include "azure-federated-actions.fullname" . }}:{{ .Values.service.port }}/hello'
   restartPolicy: Never
