@@ -47,7 +47,7 @@ jobs:
         uses: helm/kind-action@v1.2.0
       - name: deploy to kind
         run: |
-          kind load docker-image ${{steps.build-push.outputs.image}}
+          kind load --name chart-testing docker-image ${{steps.build-push.outputs.image}}
           helm install simpleapp ./chart/azure-federated-actions --set image.name=${{steps.build-push.outputs.image}}
           kubectl wait --for=condition=available --timeout=600s deployment/simpleapp-azure-federated-actions
           helm test simpleapp
