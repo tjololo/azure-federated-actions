@@ -15,8 +15,8 @@ var responseString string
 
 func main() {
 	var port int
-	flag.IntVar(&port, "port", 8080, "Port the webserver should launch with")
-	flag.StringVar(&responseString, "response", "Hello from go code.", "Content of respone element")
+	flag.IntVar(&port, "port", 8081, "Port the webserver should launch with")
+	flag.StringVar(&responseString, "response", "Hello from go code", "Content of respone element")
 	flag.Parse()
 	log.Printf("Staring application on port %d...\n", port)
 
