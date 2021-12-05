@@ -41,5 +41,5 @@ jobs:
         run: |
           ./ko login ghcr.io --username $GITHUB_REPOSITORY_OWNER --password ${{ secrets.GITHUB_TOKEN }}
           DIGEST=$(./ko publish -B .)
-          echo ${DIGEST/ghcr.io\/${{ github.repository }}/}
+          echo ${DIGEST/ghcr.io\/${{ github.repository }}##*/}
           echo ::set-output name=digest::${DIGEST}
