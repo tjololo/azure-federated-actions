@@ -49,5 +49,5 @@ jobs:
         run: |
           kind load --name chart-testing docker-image ${{steps.build-push.outputs.image}}
           helm install simpleapp ./chart/azure-federated-actions --set image.name=${{steps.build-push.outputs.image}}
-          kubectl wait --for=condition=available --timeout=600s deployment/simpleapp-azure-federated-actions
+          kubectl wait --for=condition=available --timeout=60s deployment/simpleapp-azure-federated-actions
           helm test simpleapp
