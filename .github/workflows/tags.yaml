@@ -46,14 +46,12 @@ jobs:
         run: |
           ./ko login ghcr.io --username $GITHUB_REPOSITORY_OWNER --password ${{ secrets.GITHUB_TOKEN }}
           IMAGE=$(./ko publish -B --tags ${{ steps.version.outputs.tag }} --tag-only .)
-          echo ${IMAGE}
           echo ::set-output name=image::${IMAGE}
 
   deploy-staging:
     runs-on: ubuntu-latest
     needs: build-and-push
     environment: staging
-    if: ${{false}} #disabled
     permissions:
       id-token: write
       contents: read
@@ -78,7 +76,6 @@ jobs:
   deploy-production:
     runs-on: ubuntu-latest
     needs: [build-and-push,deploy-staging]
-    if: ${{false}} #disabled
     environment: production
     permissions:
       id-token: write
