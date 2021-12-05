@@ -51,4 +51,4 @@ jobs:
           helm install simpleapp ./chart/azure-federated-actions --set image.name=${{steps.build-push.outputs.image}}
           kubectl wait --for=condition=available --timeout=60s deployment/simpleapp-azure-federated-actions
           sleep 5
-          helm test simpleapp
+          helm test simpleapp --logs
