@@ -45,7 +45,7 @@ jobs:
           KO_DOCKER_REPO: ghcr.io/${{ github.repository_owner }}
         run: |
           ./ko login ghcr.io --username $GITHUB_REPOSITORY_OWNER --password ${{ secrets.GITHUB_TOKEN }}
-          IMAGE=$(./ko publish -B --tags ${{ steps.version.outputs.tag }} .)
+          IMAGE=$(./ko publish -B --tags ${{ steps.version.outputs.tag }} --tag-only .)
           echo ${IMAGE}
           echo ::set-output name=image::${IMAGE}
 
