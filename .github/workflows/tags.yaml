@@ -14,6 +14,9 @@ jobs:
     outputs:
       image: ${{ steps.build-push.outputs.image}}
     steps:
+      - name: Get version from tags
+        id: version
+        run: echo ::set-output name=tag::${GITHUB_REF/refs\/tags\//}
       - name: Set up Go 1.17
         uses: actions/setup-go@v2
         with:
