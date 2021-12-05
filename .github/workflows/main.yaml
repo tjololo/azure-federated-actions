@@ -40,6 +40,7 @@ jobs:
           KO_DOCKER_REPO: ghcr.io/${{ github.repository_owner }}
         run: |
           ./ko login ghcr.io --username $GITHUB_REPOSITORY_OWNER --password ${{ secrets.GITHUB_TOKEN }}
-          DIGEST=$(./ko publish -B .)
-          echo ${DIGEST/ghcr.io\/${{ github.repository }}##*/}
+          IMAGE=$(./ko publish -B .)
+          DIGEST=${IMAGE##*@}
+          echo ${DIGEST}
           echo ::set-output name=digest::${DIGEST}
