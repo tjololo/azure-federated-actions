@@ -57,13 +57,31 @@ jobs:
         uses: helm/kind-action@v1.2.0
       - name: deploy to kind
         run: |
-          helm install apptest ./chart/azure-federated-actions --set image.name=${{needs.build-and-push.outputs.image}}
-          kubectl wait --for=condition=available --timeout=600s deployment/apptest-azure-federated-actions
+          helm install simpleapp ./chart/azure-federated-actions --set image.name=${{needs.build-and-push.outputs.image}}
+          kubectl wait --for=condition=available --timeout=600s deployment/simpleapp-azure-federated-actions
           helm test apptest
 
-  # deploy-staging:
-  #   runs-on: ubuntu-latest
-  #   needs: test-deploy
-  #   permissions:
-  #     id-token: write
-  #     contents: read
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: [build-and-push,test-deploy]
+    environment: staging
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Setup helm
+        uses: azure/setup-helm@v1
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: 'Az CLI login'
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Deploy to staging
+        run: |
+          az aks get-credentials -g ${{ secrets.AKS_RESOURCEGROUP_NAME }} -n ${{ secrets.AKS_CLUSTER_NAME }}
+          helm upgrade --install simpleapp ./chart/azure-federated-actions --set image.name=${{needs.build-and-push.outputs.image}}
+          kubectl wait --for=condition=available --timeout=600s deployment/simpleapp-azure-federated-actions
+          helm test apptest
