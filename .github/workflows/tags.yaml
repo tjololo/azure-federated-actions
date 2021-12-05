@@ -1,0 +1,99 @@
+name: Deploy to staging
+
+on:
+  push:
+    tags: ['*.*.*']
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      packages: write
+    outputs:
+      image: ${{ steps.build-push.outputs.image}}
+    steps:
+      - name: Set up Go 1.17
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.17
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: Lint
+        run: |
+          go get golang.org/x/lint/golint
+          golint ./...
+      - name: Build
+        run: go build -v .
+
+      - name: Test
+        run: go test -v ./...
+
+      - name: Install KO
+        run: |
+          curl -L https://github.com/google/ko/releases/download/v0.8.3/ko_0.8.3_Linux_x86_64.tar.gz | tar xzf - ko
+          chmod +x ./ko
+      - name: Publish docker image
+        id: build-push
+        env:
+          KO_DOCKER_REPO: ghcr.io/${{ github.repository_owner }}
+        run: |
+          ./ko login ghcr.io --username $GITHUB_REPOSITORY_OWNER --password ${{ secrets.GITHUB_TOKEN }}
+          IMAGE=$(./ko publish -B --tags ${{ steps.version.outputs.tag }} .)
+          echo ${IMAGE}
+          echo ::set-output name=image::${IMAGE}
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: staging
+    if: ${{false}} #disabled
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Setup helm
+        uses: azure/setup-helm@v1
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: 'Az CLI login'
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Deploy to staging
+        run: |
+          az aks get-credentials -g ${{ secrets.AKS_RESOURCEGROUP_NAME }} -n ${{ secrets.AKS_CLUSTER_NAME }}
+          helm upgrade --install simpleapp ./chart/azure-federated-actions --set image.name=${{needs.build-and-push.outputs.image}}
+          kubectl wait --for=condition=available --timeout=600s deployment/simpleapp-azure-federated-actions
+          helm test simpleapp
+
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: [build-and-push,deploy-staging]
+    if: ${{false}} #disabled
+    environment: production
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Setup helm
+        uses: azure/setup-helm@v1
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: 'Az CLI login'
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Deploy to staging
+        run: |
+          az aks get-credentials -g ${{ secrets.AKS_RESOURCEGROUP_NAME }} -n ${{ secrets.AKS_CLUSTER_NAME }}
+          helm upgrade --install simpleapp ./chart/azure-federated-actions --set image.name=${{needs.build-and-push.outputs.image}}
+          kubectl wait --for=condition=available --timeout=600s deployment/simpleapp-azure-federated-actions
+          helm test simpleapp
