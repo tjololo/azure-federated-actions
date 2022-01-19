@@ -65,7 +65,11 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       - name: Deploy to staging
         run: |
+          curl -LO "https://github.com/Azure/kubelogin/releases/download/v0.0.10/kubelogin-linux-amd64.zip"
+          sudo unzip -j "kubelogin-linux-amd64.zip" -d /usr/local/bin
+          rm -rf "kubelogin-linux-amd64.zip"
           az aks get-credentials -g ${{ secrets.AKS_RESOURCEGROUP_NAME }} -n ${{ secrets.AKS_CLUSTER_NAME }}
+          kubelogin convert-kubeconfig -l azurecli
           helm upgrade --install simpleapp ./chart/azure-federated-actions --set image.name=${{needs.build-and-push.outputs.image}}
           kubectl wait --for=condition=available --timeout=600s deployment/simpleapp-azure-federated-actions
           helm test simpleapp
